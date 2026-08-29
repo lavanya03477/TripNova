@@ -4,10 +4,24 @@ A full-stack intelligent travel planning app for exploring India — featuring A
 
 **Stack:** React + Vite (Frontend) · Python + Flask (Backend) · SQLite (Database) · Leaflet (Interactive Maps) · Google Gemini / OpenAI (AI Engine)
 
+---
+
+## ⚡ Quick 1-Click Run (For Friends & Reviewers)
+
+### Method 1: Instant Frontend Run (No Backend Setup Needed)
+```bash
+# Clone the repository
+git clone https://github.com/lavanya03477/TripNova.git
+cd TripNova/frontend
+
+# Install dependencies and start immediately
+npm install
+npm run dev
+```
+Open **http://localhost:5173** in your browser. All features (AI recommendations, day-wise itineraries, interactive maps, bus seat booking, IRCTC train search, and hotel reservations) will work instantly!
 
 ---
 
-## Step-by-Step Setup (From Scratch)
 
 ### Step 1 — Create the project folder in VS Code
 
