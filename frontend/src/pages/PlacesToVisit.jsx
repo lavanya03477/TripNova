@@ -18,11 +18,15 @@ export default function PlacesToVisit() {
   const [searchFilter, setSearchFilter] = useState('')
   
   const [result, setResult] = useState(null)
+  const [customItinerary, setCustomItinerary] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showMapModal, setShowMapModal] = useState(false)
   const [showInlineMap, setShowInlineMap] = useState(false)
   const [showStateDirectory, setShowStateDirectory] = useState(false)
+
+  // Add custom spot state per day: { dayNumber: { isOpen: boolean, name: '', time: 'Morning', duration: '2 hours' } }
+  const [addSpotState, setAddSpotState] = useState({})
 
   // Initialize from URL search parameters if available
   useEffect(() => {
@@ -37,9 +41,9 @@ export default function PlacesToVisit() {
       setDays(targetDays)
       fetchItinerary(urlPlace, urlTravelWith || travelWith || 'Solo', targetDays)
     } else if (!place) {
-      // Default to Kanyakumari on fresh visit
-      setPlace('Kanyakumari, Tamil Nadu')
-      fetchItinerary('Kanyakumari, Tamil Nadu', 'Solo', 3)
+      // Default to Ooty on fresh visit
+      setPlace('Ooty (Udhagamandalam), Tamil Nadu')
+      fetchItinerary('Ooty (Udhagamandalam), Tamil Nadu', 'Solo', 3)
     }
   }, [searchParams])
 
@@ -55,6 +59,17 @@ export default function PlacesToVisit() {
         days: parsedDays,
       })
       setResult(data)
+      // Initialize customizable itinerary with all places selected by default
+      if (data && data.itinerary) {
+        const initialized = data.itinerary.map((d) => ({
+          ...d,
+          places: (d.places || []).map((p) => ({
+            ...p,
+            selected: true,
+          })),
+        }))
+        setCustomItinerary(initialized)
+      }
     } catch (err) {
       setError(err.message || 'Failed to generate itinerary')
     } finally {
@@ -90,6 +105,121 @@ export default function PlacesToVisit() {
     }
   }
 
+  // Toggle selection of a spot on a given day
+  const toggleSpotSelection = (dayNum, spotName) => {
+    setCustomItinerary((prev) =>
+      prev.map((d) => {
+        if (d.day !== dayNum) return d
+        return {
+          ...d,
+          places: d.places.map((p) => {
+            if (p.name === spotName) {
+              return { ...p, selected: !p.selected }
+            }
+            return p
+          }),
+        }
+      })
+    )
+  }
+
+  // Move a spot to another day
+  const moveSpotToDay = (currentDayNum, targetDayNum, spot) => {
+    if (currentDayNum === targetDayNum) return
+    setCustomItinerary((prev) => {
+      // Remove from current day
+      const updated = prev.map((d) => {
+        if (d.day === currentDayNum) {
+          return {
+            ...d,
+            places: d.places.filter((p) => p.name !== spot.name),
+          }
+        }
+        if (d.day === targetDayNum) {
+          return {
+            ...d,
+            places: [...d.places, { ...spot, selected: true }],
+          }
+        }
+        return d
+      })
+      return updated
+    })
+  }
+
+  // Delete a spot from a day
+  const removeSpotFromDay = (dayNum, spotName) => {
+    setCustomItinerary((prev) =>
+      prev.map((d) => {
+        if (d.day !== dayNum) return d
+        return {
+          ...d,
+          places: d.places.filter((p) => p.name !== spotName),
+        }
+      })
+    )
+  }
+
+  // Add custom spot to a day
+  const handleAddCustomSpot = (dayNum, e) => {
+    e.preventDefault()
+    const state = addSpotState[dayNum] || {}
+    if (!state.name || !state.name.trim()) return
+
+    const newSpot = {
+      name: state.name.trim(),
+      highlight: state.highlight || `Self-selected highlight for Day ${dayNum} in ${place}.`,
+      duration: state.duration || '2 hours',
+      bestTime: state.time || 'Morning',
+      lat: (result?.lat || 11.41) + Math.random() * 0.02 - 0.01,
+      lng: (result?.lng || 76.69) + Math.random() * 0.02 - 0.01,
+      selected: true,
+    }
+
+    setCustomItinerary((prev) =>
+      prev.map((d) => {
+        if (d.day !== dayNum) return d
+        return {
+          ...d,
+          places: [...d.places, newSpot],
+        }
+      })
+    )
+
+    // Reset add input for this day
+    setAddSpotState((prev) => ({
+      ...prev,
+      [dayNum]: { isOpen: false, name: '', time: 'Morning', duration: '2 hours' },
+    }))
+  }
+
+  // Filtered places for active map (only selected spots)
+  const activeSelectedItinerary = customItinerary.map((d) => ({
+    ...d,
+    places: (d.places || []).filter((p) => p.selected !== false),
+  }))
+
+  const totalSelectedSpotsCount = customItinerary.reduce(
+    (acc, d) => acc + (d.places?.filter((p) => p.selected !== false).length || 0),
+    0
+  )
+  const totalAllSpotsCount = customItinerary.reduce(
+    (acc, d) => acc + (d.places?.length || 0),
+    0
+  )
+
+  // Reset to default AI itinerary
+  const handleResetToDefault = () => {
+    if (result && result.itinerary) {
+      setCustomItinerary(
+        result.itinerary.map((d) => ({
+          ...d,
+          places: (d.places || []).map((p) => ({ ...p, selected: true })),
+        }))
+      )
+    }
+  }
+
   // Filtered places across Indian states based on search box
   const activeStateData = INDIAN_STATES_DATA.find((s) => s.state === selectedStateFilter) || INDIAN_STATES_DATA[0]
   const allFilteredPlaces = searchFilter.trim()
@@ -109,10 +239,10 @@ export default function PlacesToVisit() {
           <div>
             <h1 className="fw-bold mb-1">
               <i className="bi bi-geo-alt-fill text-success me-2"></i>
-              Places to Visit & Travel Planner
+              Places to Visit & Day-Wise Plan
             </h1>
             <p className="text-muted mb-0">
-              TripNova AI recommends iconic attractions, day-wise itineraries, map pins, and in-page transport booking.
+              TripNova AI recommends iconic attractions. You can select, add, or customize spots for any day!
             </p>
           </div>
 
@@ -123,10 +253,10 @@ export default function PlacesToVisit() {
                   type="button"
                   className="btn btn-outline-primary d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
                   onClick={() => setShowMapModal(true)}
-                  title="View Destination and Itinerary Pins on Map"
+                  title="View Selected Destination and Attraction Pins on Map"
                 >
                   <i className="bi bi-map-fill text-danger fs-5"></i>
-                  <span className="fw-semibold">Interactive Map</span>
+                  <span className="fw-semibold">Interactive Map ({totalSelectedSpotsCount} Pins)</span>
                 </button>
                 <a
                   href="#inpage-transport-section"
@@ -171,7 +301,7 @@ export default function PlacesToVisit() {
                       className="form-control"
                       value={place}
                       onChange={(e) => setPlace(e.target.value)}
-                      placeholder="Type any place (e.g. Kanyakumari, Ooty, Manali, Madurai, Goa, Munnar)"
+                      placeholder="Type any place (e.g. Ooty, Kanyakumari, Manali, Madurai, Goa, Munnar)"
                       required
                     />
                   </div>
@@ -405,7 +535,7 @@ export default function PlacesToVisit() {
                         🌟 Verified Destination
                       </span>
                       <span className="text-muted small">
-                        {result.itinerary?.length || days} Days Itinerary · {travelWith}
+                        {customItinerary?.length || days} Days Itinerary · {travelWith}
                       </span>
                     </div>
                     <h2 className="fw-bold mb-1 text-dark">{result.place || place}</h2>
@@ -442,7 +572,7 @@ export default function PlacesToVisit() {
                 <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                   <h5 className="fw-bold mb-0">
                     <i className="bi bi-map text-danger me-2"></i>
-                    Live Route & Landmark Pins for {result.place || place}
+                    Live Route & Selected Sights ({totalSelectedSpotsCount} Pins) for {result.place || place}
                   </h5>
                   <button
                     type="button"
@@ -457,79 +587,267 @@ export default function PlacesToVisit() {
                     place={result.place || place}
                     lat={result.lat}
                     lng={result.lng}
-                    itinerary={result.itinerary}
-                    inline={true}
+                    itinerary={activeSelectedItinerary}
+                    isInline={true}
                   />
                 </div>
               </div>
             )}
 
-            {/* Day by Day Curated Itinerary */}
+            {/* Day by Day Curated Itinerary with Selection & Customization Controls */}
             <div className="mb-4">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="fw-bold mb-0">
-                  <i className="bi bi-calendar-check text-primary me-2"></i>
-                  Day-by-Day Prioritized Sights ({result.itinerary?.length} Days)
-                </h4>
+              <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                  <h4 className="fw-bold mb-0">
+                    <i className="bi bi-calendar-check text-primary me-2"></i>
+                    Day-by-Day Sights ({customItinerary?.length} Days)
+                  </h4>
+                  <p className="text-muted small mb-0">
+                    Click checkboxes to select/unselect sights for each day, or add custom places to any day.
+                  </p>
+                </div>
+
+                <div className="d-flex align-items-center gap-2">
+                  <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                    ✓ {totalSelectedSpotsCount} of {totalAllSpotsCount} Sights Selected
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary rounded-pill"
+                    onClick={handleResetToDefault}
+                    title="Reset to default AI recommendation"
+                  >
+                    <i className="bi bi-arrow-counterclockwise me-1"></i> Reset Sights
+                  </button>
+                </div>
               </div>
 
-              <div className="d-flex flex-column gap-3">
-                {result.itinerary?.map((dayPlan) => (
-                  <div key={dayPlan.day} className="card glass-card border-0 shadow-sm">
-                    <div className="card-header bg-transparent border-0 pt-3 pb-2">
-                      <div className="d-flex align-items-center gap-2">
-                        <span className="badge bg-primary rounded-pill px-3 py-2 fw-bold">
-                          Day {dayPlan.day}
-                        </span>
-                        <h5 className="fw-bold mb-0 text-dark">{dayPlan.title}</h5>
-                      </div>
-                    </div>
-                    <div className="card-body pt-1 pb-3">
-                      <div className="row g-3">
-                        {dayPlan.places?.map((spot, idx) => (
-                          <div className="col-md-6" key={spot.name || idx}>
-                            <div className="card h-100 border rounded-3 p-3 bg-white shadow-none hover-lift">
-                              <div className="d-flex justify-content-between align-items-start mb-2">
-                                <div className="d-flex align-items-center gap-2">
-                                  <span className="spot-number-badge">
-                                    {idx + 1}
-                                  </span>
-                                  <h6 className="fw-bold mb-0 text-dark">{spot.name}</h6>
-                                </div>
-                                {spot.bestTime && (
-                                  <span className="badge bg-warning text-dark border">
-                                    <i className="bi bi-clock me-1"></i>
-                                    {spot.bestTime}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="card-text text-muted small mb-2 flex-grow-1">
-                                {spot.highlight}
-                              </p>
-                              <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <span className="badge bg-light text-muted border">
-                                  <i className="bi bi-hourglass-split me-1"></i>
-                                  {spot.duration || '2-3 hours'}
-                                </span>
-                                <a
-                                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                                    spot.name + ' ' + (result.place || place)
-                                  )}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-1"
-                                >
-                                  <i className="bi bi-signpost-2"></i>
-                                  Directions
-                                </a>
-                              </div>
-                            </div>
+              {/* Day Cards List */}
+              <div className="d-flex flex-column gap-4">
+                {customItinerary?.map((dayPlan) => {
+                  const dayNum = dayPlan.day
+                  const isAddOpen = addSpotState[dayNum]?.isOpen
+
+                  return (
+                    <div key={dayNum} className="card glass-card border-0 shadow-sm">
+                      {/* Day Header */}
+                      <div className="card-header bg-transparent border-0 pt-3 pb-2">
+                        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-primary rounded-pill px-3 py-2 fw-bold">
+                              Day {dayNum}
+                            </span>
+                            <h5 className="fw-bold mb-0 text-dark">{dayPlan.title}</h5>
                           </div>
-                        ))}
+
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold"
+                            onClick={() =>
+                              setAddSpotState((prev) => ({
+                                ...prev,
+                                [dayNum]: {
+                                  isOpen: !prev[dayNum]?.isOpen,
+                                  name: '',
+                                  time: 'Morning',
+                                  duration: '2 hours',
+                                },
+                              }))
+                            }
+                          >
+                            <i className="bi bi-plus-circle me-1"></i>
+                            {isAddOpen ? 'Close Add Box' : `+ Add Place to Day ${dayNum}`}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Day Body with Places Cards */}
+                      <div className="card-body pt-1 pb-3">
+                        {/* Custom Add Place Form for this Day */}
+                        {isAddOpen && (
+                          <div className="p-3 bg-light rounded-3 border mb-3">
+                            <h6 className="fw-bold text-dark mb-2">
+                              ➕ Add a New Attraction / Activity to Day {dayNum}
+                            </h6>
+                            <form onSubmit={(e) => handleAddCustomSpot(dayNum, e)} className="row g-2">
+                              <div className="col-sm-5">
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm"
+                                  placeholder="Place Name (e.g. Tea Factory, Wax World, Safari)"
+                                  value={addSpotState[dayNum]?.name || ''}
+                                  onChange={(e) =>
+                                    setAddSpotState((prev) => ({
+                                      ...prev,
+                                      [dayNum]: { ...prev[dayNum], name: e.target.value },
+                                    }))
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div className="col-sm-3">
+                                <select
+                                  className="form-select form-select-sm"
+                                  value={addSpotState[dayNum]?.time || 'Morning'}
+                                  onChange={(e) =>
+                                    setAddSpotState((prev) => ({
+                                      ...prev,
+                                      [dayNum]: { ...prev[dayNum], time: e.target.value },
+                                    }))
+                                  }
+                                >
+                                  <option value="Morning (9 AM)">Morning (9 AM)</option>
+                                  <option value="Afternoon">Afternoon</option>
+                                  <option value="Sunset / Evening">Sunset / Evening</option>
+                                  <option value="Full Day">Full Day</option>
+                                </select>
+                              </div>
+                              <div className="col-sm-2">
+                                <select
+                                  className="form-select form-select-sm"
+                                  value={addSpotState[dayNum]?.duration || '2 hours'}
+                                  onChange={(e) =>
+                                    setAddSpotState((prev) => ({
+                                      ...prev,
+                                      [dayNum]: { ...prev[dayNum], duration: e.target.value },
+                                    }))
+                                  }
+                                >
+                                  <option value="1.5 hours">1.5 hours</option>
+                                  <option value="2-3 hours">2-3 hours</option>
+                                  <option value="4 hours">4 hours</option>
+                                  <option value="Half Day">Half Day</option>
+                                </select>
+                              </div>
+                              <div className="col-sm-2">
+                                <button type="submit" className="btn btn-success btn-sm w-100 rounded-pill fw-bold">
+                                  Add Spot
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        )}
+
+                        <div className="row g-3">
+                          {dayPlan.places?.map((spot, idx) => {
+                            const isSelected = spot.selected !== false
+
+                            return (
+                              <div className="col-md-6" key={spot.name || idx}>
+                                <div
+                                  className={`card h-100 rounded-3 p-3 transition-all hover-lift ${
+                                    isSelected
+                                      ? 'border-2 border-primary bg-white shadow-sm'
+                                      : 'border bg-light opacity-65'
+                                  }`}
+                                >
+                                  {/* Top Header with Checkbox Toggle and Actions */}
+                                  <div className="d-flex justify-content-between align-items-start mb-2 gap-2">
+                                    <div className="d-flex align-items-center gap-2">
+                                      {/* Selection Checkbox Button */}
+                                      <button
+                                        type="button"
+                                        className={`btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center ${
+                                          isSelected ? 'btn-primary' : 'btn-outline-secondary'
+                                        }`}
+                                        style={{ width: '28px', height: '28px' }}
+                                        onClick={() => toggleSpotSelection(dayNum, spot.name)}
+                                        title={isSelected ? 'Selected (Click to exclude)' : 'Click to include in Day'}
+                                      >
+                                        {isSelected ? <i className="bi bi-check-lg"></i> : (idx + 1)}
+                                      </button>
+                                      
+                                      <div>
+                                        <h6 className={`fw-bold mb-0 ${isSelected ? 'text-dark' : 'text-muted text-decoration-line-through'}`}>
+                                          {spot.name}
+                                        </h6>
+                                      </div>
+                                    </div>
+
+                                    <div className="d-flex align-items-center gap-1">
+                                      {spot.bestTime && (
+                                        <span className="badge bg-warning text-dark border">
+                                          <i className="bi bi-clock me-1"></i>
+                                          {spot.bestTime}
+                                        </span>
+                                      )}
+                                      
+                                      {/* Remove from day */}
+                                      <button
+                                        type="button"
+                                        className="btn btn-sm btn-link text-danger p-0 ms-1"
+                                        onClick={() => removeSpotFromDay(dayNum, spot.name)}
+                                        title="Remove spot from this day"
+                                      >
+                                        <i className="bi bi-trash"></i>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <p className="card-text text-muted small mb-2 flex-grow-1">
+                                    {spot.highlight}
+                                  </p>
+
+                                  {/* Bottom Actions: Directions + Move to Day + Duration */}
+                                  <div className="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top gap-2">
+                                    <div className="d-flex align-items-center gap-2">
+                                      <span className="badge bg-light text-muted border">
+                                        <i className="bi bi-hourglass-split me-1"></i>
+                                        {spot.duration || '2-3 hours'}
+                                      </span>
+
+                                      {/* Move to another Day dropdown */}
+                                      {customItinerary.length > 1 && (
+                                        <select
+                                          className="form-select form-select-sm py-0 px-2 small border rounded-pill"
+                                          style={{ width: 'auto', fontSize: '0.75rem' }}
+                                          value={dayNum}
+                                          onChange={(e) =>
+                                            moveSpotToDay(dayNum, parseInt(e.target.value, 10), spot)
+                                          }
+                                          title="Move this sight to another day"
+                                        >
+                                          {customItinerary.map((d) => (
+                                            <option key={d.day} value={d.day}>
+                                              {d.day === dayNum ? `Day ${d.day} (Current)` : `Move to Day ${d.day}`}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      )}
+                                    </div>
+
+                                    <div className="d-flex align-items-center gap-2">
+                                      <button
+                                        type="button"
+                                        className={`btn btn-sm rounded-pill px-2 small ${
+                                          isSelected ? 'btn-success text-white' : 'btn-outline-secondary'
+                                        }`}
+                                        onClick={() => toggleSpotSelection(dayNum, spot.name)}
+                                      >
+                                        {isSelected ? '✓ Included' : '+ Select'}
+                                      </button>
+                                      <a
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                          spot.name + ' ' + (result.place || place)
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-1"
+                                      >
+                                        <i className="bi bi-signpost-2"></i>
+                                        Directions
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
@@ -584,7 +902,7 @@ export default function PlacesToVisit() {
             place={result.place || place}
             lat={result.lat}
             lng={result.lng}
-            itinerary={result.itinerary}
+            itinerary={activeSelectedItinerary}
             onClose={() => setShowMapModal(false)}
           />
         )}
