@@ -1,6 +1,11 @@
 # 🌟 TripNova — India Travel Planner & Smart AI Studio
 
-A full-stack intelligent travel planning app for exploring India — featuring AI-powered day-wise itineraries, interactive Leaflet & OpenStreetMap pinning, in-app RedBus bus booking with live seat layout picker, in-app IRCTC train booking with live seat availability & PNR status tracker, and luxury & budget hotel reservations.
+## 🚀 Live Web App Link:
+### 🔗 **[Click Here to Launch TripNova Live Website](https://lavanya03477.github.io/TripNova/)**
+
+> **Live Demo**: [https://lavanya03477.github.io/TripNova/](https://lavanya03477.github.io/TripNova/)  
+> Anyone can click the link above on mobile or laptop to immediately use TripNova without installation!
+
 
 **Stack:** React + Vite (Frontend) · Python + Flask (Backend) · SQLite (Database) · Leaflet (Interactive Maps) · Google Gemini / OpenAI (AI Engine)
 
