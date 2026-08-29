@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import AIAssistant from '../components/AIAssistant'
 import InteractiveMapModal from '../components/InteractiveMapModal'
+import InPageTransportBooking from '../components/InPageTransportBooking'
 import { OptionGroup, TRAVEL_WITH, INDIAN_STATES_DATA, POPULAR_DESTINATIONS } from '../components/FormOptions'
 import { apiPost } from '../api'
 
@@ -36,9 +37,9 @@ export default function PlacesToVisit() {
       setDays(targetDays)
       fetchItinerary(urlPlace, urlTravelWith || travelWith || 'Solo', targetDays)
     } else if (!place) {
-      // Default to Madurai or Ooty on fresh visit
-      setPlace('Madurai')
-      fetchItinerary('Madurai', 'Solo', 3)
+      // Default to Kanyakumari on fresh visit
+      setPlace('Kanyakumari, Tamil Nadu')
+      fetchItinerary('Kanyakumari, Tamil Nadu', 'Solo', 3)
     }
   }, [searchParams])
 
@@ -103,29 +104,38 @@ export default function PlacesToVisit() {
     <div className="page-bg">
       <Navbar />
       <main className="container py-4">
-        {/* Header with Navigation and Map Actions */}
+        {/* Header with Navigation and Quick Jump Actions */}
         <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
           <div>
             <h1 className="fw-bold mb-1">
               <i className="bi bi-geo-alt-fill text-success me-2"></i>
-              Places to Visit & Day-Wise Plan
+              Places to Visit & Travel Planner
             </h1>
             <p className="text-muted mb-0">
-              TripNova AI recommends the most iconic attractions tailored to your trip duration.
+              TripNova AI recommends iconic attractions, day-wise itineraries, map pins, and in-page transport booking.
             </p>
           </div>
 
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex flex-wrap align-items-center gap-2">
             {place && (
-              <button
-                type="button"
-                className="btn btn-outline-primary d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
-                onClick={() => setShowMapModal(true)}
-                title="View Destination and Itinerary Pins on Map"
-              >
-                <i className="bi bi-map-fill text-danger fs-5"></i>
-                <span className="fw-semibold">Interactive Map</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
+                  onClick={() => setShowMapModal(true)}
+                  title="View Destination and Itinerary Pins on Map"
+                >
+                  <i className="bi bi-map-fill text-danger fs-5"></i>
+                  <span className="fw-semibold">Interactive Map</span>
+                </button>
+                <a
+                  href="#inpage-transport-section"
+                  className="btn btn-outline-danger d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
+                >
+                  <i className="bi bi-bus-front-fill"></i>
+                  <span className="fw-semibold">Book Transport</span>
+                </a>
+              </>
             )}
             <Link to="/plan-my-journey" className="btn btn-outline-secondary rounded-pill px-3">
               <i className="bi bi-compass me-1"></i> Plan My Journey
@@ -138,7 +148,7 @@ export default function PlacesToVisit() {
           <div className="card-body p-4">
             <form onSubmit={handleSubmit}>
               <div className="row g-3">
-                {/* Destination Input */}
+                {/* Destination Input & Place Selector */}
                 <div className="col-lg-6">
                   <label className="form-label fw-bold d-flex justify-content-between align-items-center">
                     <span>
@@ -146,10 +156,10 @@ export default function PlacesToVisit() {
                     </span>
                     <button
                       type="button"
-                      className="btn btn-sm btn-link text-decoration-none p-0"
+                      className="btn btn-sm btn-link text-decoration-none p-0 fw-semibold"
                       onClick={() => setShowStateDirectory(!showStateDirectory)}
                     >
-                      {showStateDirectory ? 'Hide State Directory' : '🗺️ Browse All States & Places'}
+                      {showStateDirectory ? '▲ Hide State Directory' : '🗺️ Select by State & All Places'}
                     </button>
                   </label>
                   <div className="input-group input-group-lg">
@@ -161,13 +171,13 @@ export default function PlacesToVisit() {
                       className="form-control"
                       value={place}
                       onChange={(e) => setPlace(e.target.value)}
-                      placeholder="Type any place (e.g. Ooty, Manali, Madurai, Goa, Jaipur, Munnar, Kashmir)"
+                      placeholder="Type any place (e.g. Kanyakumari, Ooty, Manali, Madurai, Goa, Munnar)"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Days Input */}
+                {/* Duration / Days Input */}
                 <div className="col-sm-6 col-lg-3">
                   <label className="form-label fw-bold">
                     <i className="bi bi-calendar-event text-primary me-1"></i> Duration (Days)
@@ -187,7 +197,7 @@ export default function PlacesToVisit() {
                   </div>
                 </div>
 
-                {/* Travel With Companion */}
+                {/* Travelling With Companion */}
                 <div className="col-sm-6 col-lg-3">
                   <label className="form-label fw-bold">
                     <i className="bi bi-people-fill text-info me-1"></i> Travelling With
@@ -231,7 +241,7 @@ export default function PlacesToVisit() {
 
                 <button
                   type="submit"
-                  className="btn btn-warm btn-lg rounded-pill px-4 fw-semibold"
+                  className="btn btn-warm btn-lg rounded-pill px-4 fw-semibold shadow-sm"
                   disabled={loading || !place.trim()}
                 >
                   {loading ? (
@@ -258,7 +268,7 @@ export default function PlacesToVisit() {
                     key={p}
                     type="button"
                     className={`btn btn-sm rounded-pill py-0 px-2 small ${
-                      place.toLowerCase().includes(p.toLowerCase()) ? 'btn-success' : 'btn-light border'
+                      place.toLowerCase().includes(p.toLowerCase()) ? 'btn-success fw-bold' : 'btn-light border'
                     }`}
                     onClick={() => handleSelectPlace(p)}
                   >
@@ -307,7 +317,7 @@ export default function PlacesToVisit() {
                         </button>
                       ))}
                       {allFilteredPlaces.length === 0 && (
-                        <span className="text-muted small">No direct match found. You can type any town in the search box above!</span>
+                        <span className="text-muted small">No direct match found. You can type any city in the search box above!</span>
                       )}
                     </div>
                   </div>
@@ -522,6 +532,9 @@ export default function PlacesToVisit() {
                 ))}
               </div>
             </div>
+
+            {/* ================= IN-PAGE TRANSPORT BOOKING WIDGET ================= */}
+            <InPageTransportBooking destination={result.place || place} />
 
             {/* Recommended Stays & Hotels */}
             {result.hotels && result.hotels.length > 0 && (
