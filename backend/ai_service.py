@@ -3006,29 +3006,55 @@ def general_chat(message, context=None):
             return {"answer": parsed["answer"], "source": "ai"}
         return {"answer": raw.strip().strip('"'), "source": "ai"}
 
-    msg_lower = message.lower()
-    if any(w in msg_lower for w in ["tamil nadu", "tamilnadu", "madurai", "ooty", "kodai", "chennai", "rameswaram", "kanyakumari", "thanjavur", "coimbatore"]):
+    msg_lower = message.lower().strip()
+    if any(w in msg_lower for w in ["kerala", "munnar", "alleppey", "best time to visit kerala"]):
         return {
-            "answer": "Tamil Nadu has incredible destinations: Ooty and Kodaikanal for mist-clad hill retreats, Madurai and Thanjavur for historic Chola/Pandya temples, Rameswaram and Kanyakumari for sacred coastal wonders, and Chennai for vibrant coastal culture! Check 'Places to Visit' for a day-wise itinerary.",
-            "source": "fallback"
+            "answer": "🌴 Best Time & Tips for Kerala:\n\n• Peak Season (Oct–March): Pleasant winter weather (22°C–30°C), ideal for Alleppey backwater houseboats, Munnar tea hills, and beach sunsets at Varkala & Kovalam.\n• Monsoon Season (June–Sept): Best for authentic Ayurvedic rejuvenation treatments and roaring waterfalls (Athirappilly).\n• Top Highlights: Alleppey Shikara/Houseboat, Eravikulam Tahr sanctuary, Fort Kochi colonial streets, and traditional Kerala Sadhya feast!",
+            "source": "knowledge_engine"
+        }
+    elif any(w in msg_lower for w in ["rajasthan", "family trip in rajasthan", "jaipur", "udaipur"]):
+        return {
+            "answer": "🏰 Perfect Family Trip in Rajasthan:\n\n• Ideal Circuit (5–7 Days): Jaipur (Amber Fort & Hawa Mahal) ➔ Jodhpur (Mehrangarh Blue Fort) ➔ Udaipur (Lake Pichola Boat Cruise & City Palace).\n• Desert Adventure: Take an overnight Swiss-tent camel safari in Jaisalmer Sam Sand Dunes.\n• Culinary Treats: Authentic Dal Baati Churma, Pyaaz Kachori, and Ghevar sweets.\n• Best Season: October to March.",
+            "source": "knowledge_engine"
+        }
+    elif any(w in msg_lower for w in ["hidden", "offbeat", "hill station"]):
+        return {
+            "answer": "🏔️ Top Hidden & Offbeat Hill Stations in India:\n\n1. Yercaud & Valparai (Tamil Nadu): 40 scenic hairpin bends, tea valleys, and Sholayar dam without commercial crowds.\n2. Kolli Hills (Tamil Nadu): 70 thrilling mountain curves and the 300-ft Agaya Gangai waterfall.\n3. Jibhi & Tirthan Valley (Himachal): Wooden pine cottages, trout streams, and Serolsar lake.\n4. Chopta (Uttarakhand): The 'Mini Switzerland of India' and base for Tungnath.\n5. Vagamon (Kerala): Rolling pine forests and mist-covered tea knolls.",
+            "source": "knowledge_engine"
+        }
+    elif any(w in msg_lower for w in ["vegetarian", "food", "cuisine", "dish"]):
+        return {
+            "answer": "🍲 Top Vegetarian Food Trails Across India:\n\n• Tamil Nadu: Madurai Bun Parotta & Kari Dosa alternatives, Kumbakonam Degree Filter Coffee & Ghee Roast Dosa, Murugan Idli, and authentic Jigarthanda.\n• Rajasthan: Authentic Rajasthani Thali with Dal Baati Churma, Gatte ki Sabzi, and Ker Sangri.\n• Varanasi & UP: Banarasi Tamatar Chaat, Kachori Jalebi, Malaiyo froth, and Banarasi Meetha Paan.\n• Gujarat: Kathiyawadi Thali with Dhokla, Handvo, Undhiyu, and Shrikhand.\n• Punjab & Delhi: Amritsari Kulcha with Chole, Dal Makhani, and thick Lassi.",
+            "source": "knowledge_engine"
         }
     elif any(w in msg_lower for w in ["bus", "redbus", "seat", "route"]):
         return {
-            "answer": "You can book buses directly in TripNova under 'Bus Booking'! We support RedBus and top operators like SETC, KSRTC, IntrCity, and Zingbus with live seat selection and boarding points.",
-            "source": "fallback"
+            "answer": "🚌 Bus Booking in TripNova:\n\nYou can book buses directly inside this app under the 'Bus Booking' tab! It includes live route searches for RedBus, IntrCity, Zingbus, and KSRTC, an interactive lower & upper deck seat layout picker, and instant e-ticket generation with PNR.",
+            "source": "knowledge_engine"
         }
     elif any(w in msg_lower for w in ["train", "irctc", "pnr", "rail"]):
         return {
-            "answer": "TripNova includes a built-in IRCTC train booking engine under 'Train Booking'! You can search train schedules across Southern Railways (Vande Bharat, Pandian, Cheran, Rockfort Express), check seat availability, and track live PNR status.",
-            "source": "fallback"
+            "answer": "🚂 Train Booking in TripNova:\n\nUse our built-in 'Train Booking' tab to search Indian Railways train routes (Vande Bharat, Rajdhani, Express), check real-time class availability (1A, 2A, 3A, SL, CC), and track 10-digit Live PNR Status instantly!",
+            "source": "knowledge_engine"
         }
     elif any(w in msg_lower for w in ["hotel", "stay", "room", "oyo", "taj"]):
         return {
-            "answer": "Use our 'Hotels' tab to search luxury heritage stays in Chettinad, hill resort villas in Ooty/Kodai, and budget stays with instant in-app booking.",
-            "source": "fallback"
+            "answer": "🏨 Hotel Reservations in TripNova:\n\nCheck out the 'Hotels' tab to find handpicked luxury heritage palaces, mountain tea-bungalows, beach resorts, and verified budget-friendly rooms with instant reservation vouchers.",
+            "source": "knowledge_engine"
+        }
+    elif any(w in msg_lower for w in ["tamil nadu", "tamilnadu", "madurai", "ooty", "kodai", "kodaikanal", "rameswaram", "thanjavur"]):
+        return {
+            "answer": "🛕 Tamil Nadu Travel Highlights:\n\n• Hill Stations: Ooty (Toy Train & Botanical Gardens), Kodaikanal (Star Lake & Pillar Rocks), Yercaud & Valparai.\n• UNESCO Heritage & Temples: Madurai Meenakshi Amman, Thanjavur Brihadeeswarar Big Temple, Rameswaram Pamban Bridge & 22 Theerthams, and Kanchipuram silk shrines.\n• Coastal Wonders: Kanyakumari Triveni Sangam and Mahabalipuram Shore Temples.",
+            "source": "knowledge_engine"
+        }
+    elif any(w in msg_lower for w in ["manali", "snow", "himachal"]):
+        return {
+            "answer": "❄️ Manali & Himachal Travel Guide:\n\n• Snow Season: December to February for fresh snowfall in Solang Valley, Rohtang Pass, and Sissu.\n• Adventure: Paragliding, river rafting in Kullu Beas, and trekking to Jogini Waterfall.\n• Cafe Trail: Old Manali Bohemian cafes with trout fish and wood-fired pizzas.",
+            "source": "knowledge_engine"
         }
     else:
         return {
-            "answer": "Welcome to TripNova! Ask me anything about Tamil Nadu and Indian destinations, best travel seasons, bus & train routes, budget tips, or customized day-wise itineraries.",
-            "source": "fallback"
+            "answer": "✨ Welcome to TripNova! I can help you plan your journey across all states and places in India. Ask me about specific destinations, best travel months, local food trails, bus & train routes, or customized day-wise itineraries.",
+            "source": "knowledge_engine"
         }
+
