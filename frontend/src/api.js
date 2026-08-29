@@ -2711,6 +2711,8 @@ function handleClientFallback(path, body) {
       }
     }
 
+    const matched = targetKey ? DESTINATIONS_DB[targetKey] : null;
+
     if (!matched) {
       // Dynamic generator for ANY place or state across India
       const cleanName = (body.place || 'India Destination').replace(/\b\w/g, (c) => c.toUpperCase());
